@@ -1,3 +1,6 @@
+# for local development while I'm waiting on permissions to the group aws project
+.terraform.lock.hcl
+ 
 # Local .terraform directories
 **/.terraform/*
 

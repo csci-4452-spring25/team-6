@@ -17,6 +17,17 @@ resource "aws_iam_role_policy_attachment" "eks_policy" {
 }
 
 
+
+# EKS Cluster
+resource "aws_eks_cluster" "tux_eks" {
+  name     = "tux-racer-eks"
+  role_arn = aws_iam_role.eks_role.arn
+  vpc_config {
+    subnet_ids = concat(var.eks_private_subnet_list, var.eks_public_subnet_list)
+  }
+  depends_on = [aws_iam_role_policy_attachment.eks_policy]
+}
+
 resource "aws_iam_role" "node_role" {
   name = "tux-node-role"
   assume_role_policy = jsonencode({
@@ -40,21 +51,11 @@ resource "aws_iam_role_policy_attachment" "node_cni_policy" {
 }
 
 
-# EKS Cluster
-resource "aws_eks_cluster" "tux_eks" {
-  name     = "tux-racer-eks"
-  role_arn = aws_iam_role.eks_role.arn
-  vpc_config {
-    subnet_ids = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id, aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
-  }
-  depends_on = [aws_iam_role_policy_attachment.eks_policy]
-}
-
 resource "aws_eks_node_group" "tux_nodes" {
   cluster_name    = aws_eks_cluster.tux_eks.name
   node_group_name = "tux-nodes"
   node_role_arn   = aws_iam_role.node_role.arn
-  subnet_ids      = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
+  subnet_ids      = var.eks_private_subnet_list
   scaling_config {
     desired_size = 2
     max_size     = 5

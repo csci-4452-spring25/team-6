@@ -1,0 +1,73 @@
+name: Deploy Tux Racer JS to EKS
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Login to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build, tag, and push Docker image
+      - name: Build, tag, and push image to ECR
+        env:
+          ECR_REGISTRY: 343218196114.dkr.ecr.us-east-1.amazonaws.com
+          ECR_REPOSITORY: tux-racer-js
+          IMAGE_TAG: ${{ github.sha }}  # Unique tag per commit
+        run: |
+          # Build and tag as 'latest'
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # Push both tags
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # If release, tag as release version (e.g., v1.0.0)
+          if [ "${{ github.event_name }}" == "release" ]; then
+            RELEASE_TAG=${{ github.event.release.tag_name }}
+            docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$RELEASE_TAG
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$RELEASE_TAG
+            echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_ENV
+          fi
+
+      # Install kubectl
+      - name: Install kubectl
+        if: github.event_name == 'release'  # Only on release
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+
+      # Deploy to EKS
+      - name: Deploy to EKS
+        if: github.event_name == 'release'  # Only on release
+        run: |
+          aws eks update-kubeconfig --name tux-racer-eks --region us-east-1
+          kubectl set image deployment/tux-racer tux-racer=$ECR_REGISTRY/$ECR_REPOSITORY:${{ env.RELEASE_TAG }} -n default
+          kubectl rollout status deployment/tux-racer -n default
+        env:
+          ECR_REGISTRY: 343218196114.dkr.ecr.us-east-1.amazonaws.com
+          ECR_REPOSITORY: tux-racer-js

@@ -48,6 +48,9 @@ provider "kubernetes" {
   }
 }
 
+# This is the pod deployment configs.  It essentially 
+# is the blueprint of what the pods that EKS deploys 
+# should look like and be configured as. 
 resource "kubernetes_deployment" "nginx" {
   metadata {
     name = "tux-racer-pod"
@@ -93,4 +96,28 @@ resource "kubernetes_deployment" "nginx" {
       }
     }
   }
+}
+
+# This is the load balancer.  this is the 'service'
+# that makes the application available to outside 
+# traffic.  
+resource "kubernetes_service" "nginx" {
+  metadata {
+    name = "nginx-example"
+  }
+  spec {
+    selector = {
+      App = kubernetes_deployment.nginx.spec.0.template.0.metadata[0].labels.App
+    }
+    port {
+      port        = 80
+      target_port = 80
+    }
+
+    type = "LoadBalancer"
+  }
+}
+
+output "lb_id" {
+  value = kubernetes_service.nginx.status.0.load_balancer.0.ingress.0.hostname
 }

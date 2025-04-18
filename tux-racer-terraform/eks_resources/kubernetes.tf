@@ -75,8 +75,8 @@ resource "kubernetes_deployment" "nginx" {
       }
       spec {
         container {
-          image = "nginx:1.7.8"
-          name  = "example"
+          image = "756744407522.dkr.ecr.us-east-1.amazonaws.com/tux-racer-js:latest"
+          name  = "tux-racer-js"
 
           port {
             container_port = 80

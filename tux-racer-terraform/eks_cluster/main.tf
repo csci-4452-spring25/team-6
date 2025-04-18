@@ -10,32 +10,6 @@ data "aws_availability_zones" "available" {
     values = ["opt-in-not-required"]
   }
 }
-# will be imported from aws infrastructure
-# module "vpc" {
-#   source  = "terraform-aws-modules/vpc/aws"
-#   version = "5.8.1"
-#
-#   name = "education-vpc"
-#
-#   cidr = "10.0.0.0/16"
-#   azs  = slice(data.aws_availability_zones.available.names, 0, 3)
-#
-#   private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-#   public_subnets  = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
-#
-#   enable_nat_gateway   = true
-#   single_nat_gateway   = true
-#   enable_dns_hostnames = true
-#
-#   public_subnet_tags = {
-#     "kubernetes.io/role/elb" = 1
-#   }
-#
-#   private_subnet_tags = {
-#     "kubernetes.io/role/internal-elb" = 1
-#   }
-# }
-#
 
 data "terraform_remote_state" "vpc" {
   backend = "local"
@@ -70,7 +44,7 @@ module "eks" {
   )
 
   eks_managed_node_group_defaults = {
-    ami_type = "AL2_x86_64"
+    ami_type = "AL2_ARM_64"
 
   }
 
@@ -78,7 +52,11 @@ module "eks" {
     one = {
       name = "node-group-1"
 
-      instance_types = ["t3.micro"]
+      instance_types = ["t4g.micro"]
+
+      iam_role_additional_policies = {
+        ecr_read = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+      }
 
       min_size     = 1
       max_size     = 3
@@ -88,8 +66,11 @@ module "eks" {
     two = {
       name = "node-group-2"
 
-      instance_types = ["t3.micro"]
+      instance_types = ["t4g.micro"]
 
+      iam_role_additional_policies = {
+        ecr_read = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+      }
       min_size     = 1
       max_size     = 2
       desired_size = 1

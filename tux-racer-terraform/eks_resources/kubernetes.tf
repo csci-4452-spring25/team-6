@@ -1,3 +1,5 @@
+
+
 terraform {
   required_providers {
     aws = {
@@ -26,10 +28,18 @@ provider "aws" {
   region = data.terraform_remote_state.eks.outputs.region
 }
 
+locals {
+  region = data.terraform_remote_state.eks.outputs.region
+  // use this variable to increment the version nubmer.
+  version = "latest"
+}
+
+
+
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster
-# retrieves information about the eks who's name is passed in.  See url above
-# Then I can use this object to reference the other needed information about the 
-# EKS. 
+# retrieves information about the eks who's name is passed in.  see url above
+# then i can use this object to reference the other needed information about the 
+# eks. 
 data "aws_eks_cluster" "cluster" {
   name = data.terraform_remote_state.eks.outputs.eks_cluster_name
 }
@@ -48,14 +58,14 @@ provider "kubernetes" {
   }
 }
 
-# This is the pod deployment configs.  It essentially 
-# is the blueprint of what the pods that EKS deploys 
+# this is the pod deployment configs.  it essentially 
+# is the blueprint of what the pods that eks deploys 
 # should look like and be configured as. 
 resource "kubernetes_deployment" "nginx" {
   metadata {
     name = "tux-racer-pod"
     labels = {
-      App = "TuxRacerProd"
+      App = "tuxracerprod"
     }
   }
 
@@ -64,18 +74,18 @@ resource "kubernetes_deployment" "nginx" {
     selector {
       # reference to the meta data section? 
       match_labels = {
-        App = "TuxRacerProd"
+        App = "tuxracerprod"
       }
     }
     template {
       metadata {
         labels = {
-          App = "TuxRacerProd"
+          App = "tuxracerprod"
         }
       }
       spec {
         container {
-          image = "756744407522.dkr.ecr.us-east-1.amazonaws.com/tux-racer-js:latest"
+          image = "${var.aws_account_id}.dkr.ecr.${local.region}.amazonaws.com/tux-racer-js:${local.version}"
           name  = "tux-racer-js"
 
           port {
@@ -110,7 +120,7 @@ resource "kubernetes_service" "nginx" {
       App = kubernetes_deployment.nginx.spec.0.template.0.metadata[0].labels.App
     }
     port {
-      port        = 80
+      port        = var.img_exposed_port
       target_port = 80
     }
 

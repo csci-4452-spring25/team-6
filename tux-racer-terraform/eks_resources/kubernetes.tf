@@ -70,7 +70,7 @@ resource "kubernetes_deployment" "nginx" {
   }
 
   spec {
-    replicas = 2
+    replicas = 1
     selector {
       # reference to the meta data section? 
       match_labels = {
@@ -85,7 +85,7 @@ resource "kubernetes_deployment" "nginx" {
       }
       spec {
         container {
-          image = "${var.aws_account_id}.dkr.ecr.${local.region}.amazonaws.com/tux-racer-js:${local.version}"
+          image = "${var.aws_account_id}.dkr.ecr.${local.region}.amazonaws.com/next-nginx-app:${local.version}"
           name  = "tux-racer-js"
 
           port {
@@ -98,7 +98,7 @@ resource "kubernetes_deployment" "nginx" {
               memory = "512Mi"
             }
             requests = {
-              cpu    = "250m"
+              cpu    = "5m"
               memory = "50Mi"
             }
           }
@@ -107,6 +107,27 @@ resource "kubernetes_deployment" "nginx" {
     }
   }
 }
+
+# configs for doing horizontal scalling of pod resources.  
+resource "kubernetes_horizontal_pod_autoscaler" "tux-autoscaler" {
+  metadata {
+    name = "tux-autoscaler"
+  }
+
+  spec {
+    max_replicas = 3
+    min_replicas = 1
+
+    scale_target_ref {
+      kind        = "Deployment"
+      name        = kubernetes_deployment.nginx.metadata[0].name
+      api_version = "apps/v1"
+    }
+
+    target_cpu_utilization_percentage = 3
+  }
+}
+
 
 # This is the load balancer.  this is the 'service'
 # that makes the application available to outside 

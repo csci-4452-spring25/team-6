@@ -31,7 +31,8 @@ provider "aws" {
 locals {
   region = data.terraform_remote_state.eks.outputs.region
   // use this variable to increment the version nubmer.
-  version = "latest"
+  version    = var.tux_racer_version
+  image_name = var.image_name
 }
 
 
@@ -85,7 +86,7 @@ resource "kubernetes_deployment" "nginx" {
       }
       spec {
         container {
-          image = "${var.aws_account_id}.dkr.ecr.${local.region}.amazonaws.com/next-nginx-app:${local.version}"
+          image = "${var.aws_account_id}.dkr.ecr.${local.region}.amazonaws.com/${local.image_name}:${local.version}"
           name  = "tux-racer-js"
 
           port {

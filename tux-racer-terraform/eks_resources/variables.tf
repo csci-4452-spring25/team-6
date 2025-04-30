@@ -17,5 +17,5 @@ variable "tux_racer_version" {
 variable "image_name" {
   description = "the name of the image container in ecr"
   type        = string
-  default     = "tux-racer-vite"
+  default     = "tux-racer-ts"
 }

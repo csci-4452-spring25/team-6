@@ -44,7 +44,7 @@ module "eks" {
   )
 
   eks_managed_node_group_defaults = {
-    ami_type = "AL2_ARM_64"
+    ami_type = var.ami_type
 
   }
 
@@ -52,7 +52,7 @@ module "eks" {
     one = {
       name = "node-group-1"
 
-      instance_types = ["t4g.micro"]
+      instance_types = [var.nodegroup_instance_type]
 
       iam_role_additional_policies = {
         ecr_read = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
@@ -66,7 +66,7 @@ module "eks" {
     two = {
       name = "node-group-2"
 
-      instance_types = ["t4g.micro"]
+      instance_types = [var.nodegroup_instance_type]
 
       iam_role_additional_policies = {
         ecr_read = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"

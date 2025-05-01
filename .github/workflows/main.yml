@@ -36,7 +36,7 @@ jobs:
       - name: Build, tag, and push image to ECR
         env:
           ECR_REGISTRY: 343218196114.dkr.ecr.us-east-1.amazonaws.com
-          ECR_REPOSITORY: tux-racer-js
+          ECR_REPOSITORY: tux-racer-ts
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build and tag as 'latest'

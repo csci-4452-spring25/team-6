@@ -35,7 +35,7 @@ jobs:
       # Build, tag, and push Docker image
       - name: Build, tag, and push image to ECR
         env:
-          ECR_REGISTRY: 343218196114.dkr.ecr.us-east-1.amazonaws.com
+          ECR_REGISTRY: 756744407522.dkr.ecr.us-east-1.amazonaws.com
           ECR_REPOSITORY: tux-racer-js
           IMAGE_TAG: ${{ github.sha }}
         run: |

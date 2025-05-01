@@ -25,7 +25,7 @@ variable "ami_type" {
 variable "nodegroup_instance_type" {
   description = "instance ec2 type for node group"
   type        = string
-  default     = "t3.micro"
+  default     = "t3.small"
 
 }
 

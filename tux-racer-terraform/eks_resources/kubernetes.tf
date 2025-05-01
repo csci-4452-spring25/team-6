@@ -99,7 +99,7 @@ resource "kubernetes_deployment" "nginx" {
               memory = "512Mi"
             }
             requests = {
-              cpu    = "5m"
+              cpu    = "3m"
               memory = "50Mi"
             }
           }
@@ -116,7 +116,7 @@ resource "kubernetes_horizontal_pod_autoscaler" "tux-autoscaler" {
   }
 
   spec {
-    max_replicas = 3
+    max_replicas = 5
     min_replicas = 1
 
     scale_target_ref {

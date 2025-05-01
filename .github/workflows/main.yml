@@ -1,0 +1,53 @@
+name: Deploy Tux Racer JS to EKS
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Login to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build, tag, and push Docker image
+      - name: Build, tag, and push image to ECR
+        env:
+          ECR_REGISTRY: 756744407522.dkr.ecr.us-east-1.amazonaws.com
+          ECR_REPOSITORY: tux-racer-js
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build and tag as 'latest'
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # Push both tags
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # If release, tag as release version (e.g., v1.0.0)
+          if [ "${{ github.event_name }}" == "release" ]; then
+            RELEASE_TAG=${{ github.event.release.tag_name }}
+            docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$RELEASE_TAG
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$RELEASE_TAG
+          fi

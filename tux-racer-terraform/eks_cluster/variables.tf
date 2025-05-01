@@ -19,13 +19,13 @@ variable "cluster_version" {
 variable "ami_type" {
   description = "ami type for eks nodegroup"
   type        = string
-  default     = "AL2_ARM_64"
+  default     = "AL2_x86_64"
 }
 
 variable "nodegroup_instance_type" {
   description = "instance ec2 type for node group"
   type        = string
-  default     = "t4g.micro"
+  default     = "t3.micro"
 
 }
 

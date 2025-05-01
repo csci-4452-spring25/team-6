@@ -199,7 +199,7 @@ export class Hud {
       halfSize,
       halfSize,
     );
-    gradient.addColorStop(0, "blue");
+    gradient.addColorStop(0, "pink");
     gradient.addColorStop(0.4, "yellow");
     gradient.addColorStop(0.5, "red");
     return gradient;
